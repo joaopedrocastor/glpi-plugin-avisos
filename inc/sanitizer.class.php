@@ -82,6 +82,24 @@ class PluginAvisosSanitizer
             return '';
         }
 
+        // Falha segura (seção 12): qualquer erro inesperado no parsing devolve
+        // texto escapado em vez de derrubar a gravação.
+        try {
+            return self::doGetSafeHtml($html);
+        } catch (\Throwable $e) {
+            return htmlspecialchars(strip_tags($html), ENT_QUOTES, 'UTF-8');
+        }
+    }
+
+    /**
+     * Implementação interna da sanitização (ver getSafeHtml).
+     *
+     * @param string $html Conteúdo bruto não vazio.
+     *
+     * @return string
+     */
+    private static function doGetSafeHtml($html)
+    {
         $dom = new DOMDocument('1.0', 'UTF-8');
         $previous = libxml_use_internal_errors(true);
         // O prefixo <?xml encoding> força UTF-8; <body> serve de âncora
