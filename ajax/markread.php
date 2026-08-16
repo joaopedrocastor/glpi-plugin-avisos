@@ -11,8 +11,16 @@
  */
 
 // Log direto em arquivo (não passa pelo filtro de erros do GLPI).
+// Registra, ANTES do include (que pode morrer no CSRF), o que chegou.
 $avisos_dbg = dirname(__DIR__, 3) . '/files/_log/avisos-debug.log';
-@file_put_contents($avisos_dbg, date('c') . " HIT\n", FILE_APPEND);
+@file_put_contents($avisos_dbg, sprintf(
+    "%s HIT method=%s xrw=%s hdrtoken=%s posttoken=%s\n",
+    date('c'),
+    $_SERVER['REQUEST_METHOD'] ?? '?',
+    $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '-',
+    substr($_SERVER['HTTP_X_GLPI_CSRF_TOKEN'] ?? '-', 0, 8),
+    substr($_POST['_glpi_csrf_token'] ?? '-', 0, 8)
+), FILE_APPEND);
 
 header('Content-Type: application/json; charset=UTF-8');
 
