@@ -102,10 +102,11 @@ class PluginAvisosSanitizer
     {
         $dom = new DOMDocument('1.0', 'UTF-8');
         $previous = libxml_use_internal_errors(true);
-        // O prefixo <?xml encoding> força UTF-8; <body> serve de âncora
-        // confiável — getElementById exigiria DTD e retornaria null.
+        // A meta charset força o libxml a interpretar o conteúdo como UTF-8;
+        // <body> serve de âncora confiável (getElementById exigiria DTD).
+        $meta = '<meta http-equiv="Content-Type" content="text/html; charset=utf-8">';
         $loaded = $dom->loadHTML(
-            '<?xml encoding="UTF-8" ?><body>' . $html . '</body>',
+            $meta . '<body>' . $html . '</body>',
             LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING
         );
         libxml_clear_errors();
@@ -114,13 +115,6 @@ class PluginAvisosSanitizer
         if (!$loaded) {
             // Falha de parsing: devolve texto escapado (fail-safe).
             return htmlspecialchars(strip_tags($html), ENT_QUOTES, 'UTF-8');
-        }
-
-        // Remove a instrução de processamento <?xml ...?> injetada acima.
-        foreach (iterator_to_array($dom->childNodes) as $node) {
-            if ($node instanceof DOMProcessingInstruction) {
-                $node->parentNode->removeChild($node);
-            }
         }
 
         $body = $dom->getElementsByTagName('body')->item(0);
