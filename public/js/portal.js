@@ -206,7 +206,12 @@
             fetch(pluginAvisosBaseUrl() + '/ajax/markread.php', {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    // O GLPI valida CSRF de requisições AJAX por este cabeçalho.
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-Glpi-Csrf-Token': alert.csrf || ''
+                },
                 body: body
             }).catch(function () { /* falha aberta */ });
         } catch (e) { /* falha aberta */ }

@@ -25,26 +25,24 @@ try {
         exit;
     }
 
+    // CSRF já foi validado pelo próprio GLPI (inc/includes.php) para este
+    // POST — se chegou até aqui, o token do cabeçalho X-Glpi-Csrf-Token
+    // passou. Não é preciso revalidar (seção 12.6 atendida pelo padrão GLPI).
+
     $alerts_id = (int) ($_POST['alerts_id'] ?? 0);
     $action    = (string) ($_POST['action'] ?? '');
 
-    $csrf_ok  = Session::validateCSRF($_POST);
     $eligible = $alerts_id > 0
         && PluginAvisosAlert::isEligibleForCurrentSession($alerts_id);
 
     @file_put_contents($avisos_dbg, sprintf(
-        "%s gate csrf=%d eligible=%d id=%d action=%s\n",
+        "%s gate eligible=%d id=%d action=%s\n",
         date('c'),
-        $csrf_ok ? 1 : 0,
         $eligible ? 1 : 0,
         $alerts_id,
         $action
     ), FILE_APPEND);
 
-    if (!$csrf_ok) {
-        echo json_encode(['ok' => false, 'e' => 'csrf']);
-        exit;
-    }
     if (!$eligible) {
         echo json_encode(['ok' => false, 'e' => 'eligible']);
         exit;
