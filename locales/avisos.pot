@@ -1,0 +1,135 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI Plugin Avisos 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Avisos ao usuário"
+msgstr ""
+
+msgid "Aviso"
+msgid_plural "Avisos"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Público-alvo"
+msgid_plural "Públicos-alvo"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Visualização"
+msgid_plural "Visualizações"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Informação"
+msgstr ""
+
+msgid "Atenção"
+msgstr ""
+
+msgid "Crítico"
+msgstr ""
+
+msgid "Informativo"
+msgstr ""
+
+msgid "Com ciência"
+msgstr ""
+
+msgid "Travante"
+msgstr ""
+
+msgid "Texto formatado"
+msgstr ""
+
+msgid "HTML"
+msgstr ""
+
+msgid "Avisos"
+msgstr ""
+
+msgid "Editar aviso em HTML"
+msgstr ""
+
+msgid "Ver relatório de visualização"
+msgstr ""
+
+msgid "Bypass de aviso travante"
+msgstr ""
+
+msgid "Direitos adicionais"
+msgstr ""
+
+msgid "Título"
+msgstr ""
+
+msgid "Conteúdo"
+msgstr ""
+
+msgid "Formato do conteúdo"
+msgstr ""
+
+msgid "Severidade"
+msgstr ""
+
+msgid "Comportamento"
+msgstr ""
+
+msgid "Manter faixa após fechar"
+msgstr ""
+
+msgid "Indisponível para Travante"
+msgstr ""
+
+msgid "Início da exibição"
+msgstr ""
+
+msgid "Fim da exibição"
+msgstr ""
+
+msgid "Prioridade"
+msgstr ""
+
+msgid "Data de republicação"
+msgstr ""
+
+msgid "Ativo"
+msgstr ""
+
+msgid "Público-alvo"
+msgstr ""
+
+msgid "Entidades"
+msgstr ""
+
+msgid "Adicionar entidade"
+msgstr ""
+
+msgid "Incluir sub-entidades"
+msgstr ""
+
+msgid "Perfis"
+msgstr ""
+
+msgid "Vazio = todos os perfis das entidades escolhidas."
+msgstr ""
+
+msgid "O título é obrigatório."
+msgstr ""
+
+msgid "O fim da exibição deve ser maior que o início."
+msgstr ""
+
+msgid "Selecione ao menos uma entidade no público-alvo."
+msgstr ""
+
+msgid "Desativar imediatamente"
+msgstr ""
+
+msgid "Aviso desativado."
+msgstr ""

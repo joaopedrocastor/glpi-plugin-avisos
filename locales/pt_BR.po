@@ -1,0 +1,135 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: GLPI Plugin Avisos 1.0.0\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: pt_BR\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Avisos ao usuário"
+msgstr "Avisos ao usuário"
+
+msgid "Aviso"
+msgid_plural "Avisos"
+msgstr[0] "Aviso"
+msgstr[1] "Avisos"
+
+msgid "Público-alvo"
+msgid_plural "Públicos-alvo"
+msgstr[0] "Público-alvo"
+msgstr[1] "Públicos-alvo"
+
+msgid "Visualização"
+msgid_plural "Visualizações"
+msgstr[0] "Visualização"
+msgstr[1] "Visualizações"
+
+msgid "Informação"
+msgstr "Informação"
+
+msgid "Atenção"
+msgstr "Atenção"
+
+msgid "Crítico"
+msgstr "Crítico"
+
+msgid "Informativo"
+msgstr "Informativo"
+
+msgid "Com ciência"
+msgstr "Com ciência"
+
+msgid "Travante"
+msgstr "Travante"
+
+msgid "Texto formatado"
+msgstr "Texto formatado"
+
+msgid "HTML"
+msgstr "HTML"
+
+msgid "Avisos"
+msgstr "Avisos"
+
+msgid "Editar aviso em HTML"
+msgstr "Editar aviso em HTML"
+
+msgid "Ver relatório de visualização"
+msgstr "Ver relatório de visualização"
+
+msgid "Bypass de aviso travante"
+msgstr "Bypass de aviso travante"
+
+msgid "Direitos adicionais"
+msgstr "Direitos adicionais"
+
+msgid "Título"
+msgstr "Título"
+
+msgid "Conteúdo"
+msgstr "Conteúdo"
+
+msgid "Formato do conteúdo"
+msgstr "Formato do conteúdo"
+
+msgid "Severidade"
+msgstr "Severidade"
+
+msgid "Comportamento"
+msgstr "Comportamento"
+
+msgid "Manter faixa após fechar"
+msgstr "Manter faixa após fechar"
+
+msgid "Indisponível para Travante"
+msgstr "Indisponível para Travante"
+
+msgid "Início da exibição"
+msgstr "Início da exibição"
+
+msgid "Fim da exibição"
+msgstr "Fim da exibição"
+
+msgid "Prioridade"
+msgstr "Prioridade"
+
+msgid "Data de republicação"
+msgstr "Data de republicação"
+
+msgid "Ativo"
+msgstr "Ativo"
+
+msgid "Público-alvo"
+msgstr "Público-alvo"
+
+msgid "Entidades"
+msgstr "Entidades"
+
+msgid "Adicionar entidade"
+msgstr "Adicionar entidade"
+
+msgid "Incluir sub-entidades"
+msgstr "Incluir sub-entidades"
+
+msgid "Perfis"
+msgstr "Perfis"
+
+msgid "Vazio = todos os perfis das entidades escolhidas."
+msgstr "Vazio = todos os perfis das entidades escolhidas."
+
+msgid "O título é obrigatório."
+msgstr "O título é obrigatório."
+
+msgid "O fim da exibição deve ser maior que o início."
+msgstr "O fim da exibição deve ser maior que o início."
+
+msgid "Selecione ao menos uma entidade no público-alvo."
+msgstr "Selecione ao menos uma entidade no público-alvo."
+
+msgid "Desativar imediatamente"
+msgstr "Desativar imediatamente"
+
+msgid "Aviso desativado."
+msgstr "Aviso desativado."
