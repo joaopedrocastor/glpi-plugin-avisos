@@ -328,6 +328,27 @@ class PluginAvisosAlert extends CommonDBTM
     }
 
     /**
+     * Converte conteúdo armazenado (com entidades HTML) em HTML real.
+     *
+     * Trata tanto o encoding do GLPI (Sanitizer) quanto entidades nomeadas/
+     * numéricas remanescentes. O resultado ainda passa pela allowlist depois,
+     * então é seguro decodificar aqui (seção 12).
+     *
+     * @param string $raw Conteúdo bruto do banco/POST.
+     *
+     * @return string HTML real (não sanitizado ainda).
+     */
+    private static function toRealHtml($raw)
+    {
+        $raw = (string) $raw;
+        if (class_exists(\Glpi\Toolbox\Sanitizer::class)
+            && \Glpi\Toolbox\Sanitizer::isHtmlEncoded($raw)) {
+            $raw = \Glpi\Toolbox\Sanitizer::unsanitize($raw);
+        }
+        return html_entity_decode($raw, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
+
+    /**
      * Monta os dados de exibição de um aviso, prontos para o modal.
      * Conteúdo é dessanitizado do armazenamento e passado pela allowlist de
      * novo (sanitização na exibição — seção 12.2). Título vai como texto puro.
@@ -338,12 +359,9 @@ class PluginAvisosAlert extends CommonDBTM
      */
     private static function buildModalData(array $alert)
     {
-        $content = $alert['content'] ?? '';
-        if (class_exists(\Glpi\Toolbox\Sanitizer::class)
-            && \Glpi\Toolbox\Sanitizer::isHtmlEncoded($content)) {
-            $content = \Glpi\Toolbox\Sanitizer::unsanitize($content);
-        }
-        $content = PluginAvisosSanitizer::getSafeHtml($content);
+        // Conteúdo armazenado vem codificado; converte para HTML real e
+        // reaplica a allowlist (sanitização na exibição — seção 12.2).
+        $content = PluginAvisosSanitizer::getSafeHtml(self::toRealHtml($alert['content'] ?? ''));
 
         return [
             'id'       => (int) $alert['id'],
@@ -431,19 +449,12 @@ class PluginAvisosAlert extends CommonDBTM
         }
 
         // --- Sanitização do conteúdo na gravação (seção 12.2) ---
-        // O GLPI 10 entrega o POST já codificado (Sanitizer). É preciso
-        // reverter para HTML real antes da allowlist e recodificar depois,
-        // para manter o padrão de armazenamento do GLPI.
+        // O GLPI entrega o POST codificado. Reverte para HTML real, aplica a
+        // allowlist e recodifica para o armazenamento padrão do GLPI.
         if (isset($input['content'])) {
-            $content = $input['content'];
+            $content = PluginAvisosSanitizer::getSafeHtml(self::toRealHtml($input['content']));
             if (class_exists(\Glpi\Toolbox\Sanitizer::class)) {
-                if (\Glpi\Toolbox\Sanitizer::isHtmlEncoded($content)) {
-                    $content = \Glpi\Toolbox\Sanitizer::unsanitize($content);
-                }
-                $content = PluginAvisosSanitizer::getSafeHtml($content);
                 $content = \Glpi\Toolbox\Sanitizer::sanitize($content);
-            } else {
-                $content = PluginAvisosSanitizer::getSafeHtml($content);
             }
             $input['content'] = $content;
         }
