@@ -3,12 +3,16 @@
  * Endpoint AJAX: registra fechamento/ciência de um aviso (seções 12 e 14).
  *
  * - Usuário vem SEMPRE da sessão (seção 12.5).
- * - O aviso precisa ser elegível para a sessão atual antes de gravar
- *   (seção 12.4): não se confia no id enviado pelo cliente.
- * - CSRF conforme padrão do GLPI (seção 12.6) — valida e responde JSON no
- *   erro (em vez de encerrar com página HTML, imprópria para AJAX).
+ * - O aviso precisa ser elegível para a sessão atual (seção 12.4).
+ * - CSRF conforme padrão do GLPI (seção 12.6) — valida e responde JSON.
  * - Falha aberta: erro devolve HTTP 200 e não quebra o portal.
+ *
+ * NOTA: contém log de diagnóstico temporário em files/_log/avisos-debug.log.
  */
+
+// Log direto em arquivo (não passa pelo filtro de erros do GLPI).
+$avisos_dbg = dirname(__DIR__, 3) . '/files/_log/avisos-debug.log';
+@file_put_contents($avisos_dbg, date('c') . " HIT\n", FILE_APPEND);
 
 header('Content-Type: application/json; charset=UTF-8');
 
@@ -16,6 +20,7 @@ try {
     include('../../../inc/includes.php');
 
     if (!Session::getLoginUserID()) {
+        @file_put_contents($avisos_dbg, date('c') . " nosession\n", FILE_APPEND);
         echo json_encode(['ok' => false, 'e' => 'nosession']);
         exit;
     }
@@ -27,14 +32,14 @@ try {
     $eligible = $alerts_id > 0
         && PluginAvisosAlert::isEligibleForCurrentSession($alerts_id);
 
-    // Log diagnóstico temporário: mostra o gate exato que barra a gravação.
-    trigger_error(sprintf(
-        '[avisos] markread: csrf=%d eligible=%d alerts_id=%d action=%s',
+    @file_put_contents($avisos_dbg, sprintf(
+        "%s gate csrf=%d eligible=%d id=%d action=%s\n",
+        date('c'),
         $csrf_ok ? 1 : 0,
         $eligible ? 1 : 0,
         $alerts_id,
         $action
-    ), E_USER_WARNING);
+    ), FILE_APPEND);
 
     if (!$csrf_ok) {
         echo json_encode(['ok' => false, 'e' => 'csrf']);
@@ -46,11 +51,11 @@ try {
     }
 
     $ok = PluginAvisosRead::record($alerts_id, $action, Session::getLoginUserID());
-    trigger_error('[avisos] markread record=' . var_export($ok, true), E_USER_WARNING);
+    @file_put_contents($avisos_dbg, date('c') . ' record=' . var_export($ok, true) . "\n", FILE_APPEND);
 
     echo json_encode(['ok' => (bool) $ok]);
 } catch (\Throwable $e) {
-    trigger_error('[avisos] markread EXC: ' . $e->getMessage(), E_USER_WARNING);
+    @file_put_contents($avisos_dbg, date('c') . ' EXC ' . $e->getMessage() . "\n", FILE_APPEND);
     http_response_code(200);
     echo json_encode(['ok' => false, 'e' => 'exception']);
 }
