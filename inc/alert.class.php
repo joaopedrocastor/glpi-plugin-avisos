@@ -129,6 +129,20 @@ class PluginAvisosAlert extends CommonDBTM
     // ==================================================================
 
     /**
+     * Defaults de um aviso novo (getEmpty não respeita o default da tabela).
+     *
+     * @return void
+     */
+    public function post_getEmpty()
+    {
+        $this->fields['is_active']      = 1;
+        $this->fields['severity']       = self::SEVERITY_INFO;
+        $this->fields['behavior']       = self::BEHAVIOR_INFORMATIVE;
+        $this->fields['content_format'] = self::FORMAT_RICHTEXT;
+        $this->fields['priority']       = 0;
+    }
+
+    /**
      * @param array $input Dados do formulário.
      *
      * @return array|false
@@ -675,11 +689,15 @@ class PluginAvisosAlert extends CommonDBTM
         echo "</tr>";
 
         // Perfis (múltipla seleção; vazio = todos).
+        // Usa showFromArray (robusto) em vez de Profile::dropdown múltiplo.
+        $all_profiles = [];
+        foreach ((new Profile())->find([], ['name']) as $p) {
+            $all_profiles[$p['id']] = $p['name'];
+        }
         echo "<tr class='tab_bg_1'>";
         echo "<td>" . __('Perfis', 'avisos') . "</td>";
         echo "<td colspan='3'>";
-        Profile::dropdown([
-            'name'     => '_target_profile[]',
+        Dropdown::showFromArray('_target_profile', $all_profiles, [
             'multiple' => true,
             'values'   => array_keys($targets['Profile']),
             'width'    => '60%',
