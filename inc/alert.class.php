@@ -125,6 +125,236 @@ class PluginAvisosAlert extends CommonDBTM
     }
 
     // ==================================================================
+    //  Exibição no portal (seção 9) — regra de negócio, sem HTML/JS
+    // ==================================================================
+
+    /**
+     * Avisos pendentes para a sessão atual, na ordem de exibição (seção 9).
+     *
+     * A lista deriva SEMPRE da sessão (usuário, entidade e perfil ativos) —
+     * nunca de parâmetro do cliente (seção 12.4). Retorna dados já prontos
+     * para o modal (título escapado à parte, conteúdo sanitizado).
+     *
+     * @return array<int,array> Lista ordenada de avisos.
+     */
+    public static function getPendingForCurrentSession()
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $users_id = Session::getLoginUserID();
+        if (!$users_id) {
+            return [];
+        }
+
+        $now     = $_SESSION['glpi_currenttime'] ?? date('Y-m-d H:i:s');
+        $entity  = (int) ($_SESSION['glpiactive_entity'] ?? 0);
+        $profile = (int) ($_SESSION['glpiactiveprofile']['id'] ?? 0);
+        $bypass  = (bool) Session::haveRight(PluginAvisosProfile::RIGHT_BYPASS, 1);
+
+        // Cadeia da entidade ativa (ela + ascendentes) para "sub-entidades".
+        $entity_chain   = getAncestorsOf('glpi_entities', $entity);
+        $entity_chain[] = $entity;
+        $entity_chain   = array_map('intval', $entity_chain);
+
+        // Condições 1 e 2: ativo, não excluído e dentro do período.
+        $rows = $DB->request([
+            'FROM'  => self::getTable(),
+            'WHERE' => [
+                'is_active'  => 1,
+                'is_deleted' => 0,
+                'date_start' => ['<=', $now],
+                'date_end'   => ['>=', $now],
+            ],
+        ]);
+
+        $pending = [];
+        foreach ($rows as $alert) {
+            // Bypass: perfis marcados não recebem modal travante (seção 13).
+            if ($bypass && $alert['behavior'] === self::BEHAVIOR_BLOCKING) {
+                continue;
+            }
+            // Condição 3: entidade (respeitando sub-entidades).
+            if (!self::matchesEntity((int) $alert['id'], $entity, $entity_chain)) {
+                continue;
+            }
+            // Condição 4: perfil (vazio = todos).
+            if (!self::matchesProfile((int) $alert['id'], $profile)) {
+                continue;
+            }
+            // Condição 5: travante ignora leitura; senão, não pode haver
+            // fechamento após a data de referência (republicação ou início).
+            if ($alert['behavior'] !== self::BEHAVIOR_BLOCKING) {
+                $ref = !empty($alert['date_republish'])
+                    ? $alert['date_republish']
+                    : $alert['date_start'];
+                if (self::hasReadSince((int) $alert['id'], $users_id, $ref)) {
+                    continue;
+                }
+            }
+            $pending[] = $alert;
+        }
+
+        // Ordem: severidade (Crítico→Info), depois prioridade, depois início.
+        $order = self::getSeverityOrder();
+        usort($pending, static function ($a, $b) use ($order) {
+            $sa = $order[$a['severity']] ?? 0;
+            $sb = $order[$b['severity']] ?? 0;
+            if ($sa !== $sb) {
+                return $sb <=> $sa;
+            }
+            if ((int) $a['priority'] !== (int) $b['priority']) {
+                return (int) $b['priority'] <=> (int) $a['priority'];
+            }
+            return strcmp((string) $a['date_start'], (string) $b['date_start']);
+        });
+
+        return array_map([self::class, 'buildModalData'], $pending);
+    }
+
+    /**
+     * A entidade ativa está no público-alvo do aviso? (respeita sub-entidades)
+     *
+     * @param integer   $alerts_id    Id do aviso.
+     * @param integer   $entity       Entidade ativa.
+     * @param int[]     $entity_chain Entidade ativa + ascendentes.
+     *
+     * @return boolean
+     */
+    private static function matchesEntity($alerts_id, $entity, array $entity_chain)
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $targets = $DB->request([
+            'FROM'  => 'glpi_plugin_avisos_targets',
+            'WHERE' => [
+                'plugin_avisos_alerts_id' => $alerts_id,
+                'itemtype'                => 'Entity',
+            ],
+        ]);
+
+        foreach ($targets as $t) {
+            $tid = (int) $t['items_id'];
+            if (!empty($t['is_recursive'])) {
+                // Recursivo: casa se a entidade alvo é a ativa ou ascendente.
+                if (in_array($tid, $entity_chain, true)) {
+                    return true;
+                }
+            } elseif ($tid === (int) $entity) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * O perfil ativo está no público-alvo? Sem perfis definidos = todos.
+     *
+     * @param integer $alerts_id Id do aviso.
+     * @param integer $profile   Perfil ativo.
+     *
+     * @return boolean
+     */
+    private static function matchesProfile($alerts_id, $profile)
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        $count = count(iterator_to_array($DB->request([
+            'FROM'  => 'glpi_plugin_avisos_targets',
+            'WHERE' => [
+                'plugin_avisos_alerts_id' => $alerts_id,
+                'itemtype'                => 'Profile',
+            ],
+        ])));
+
+        if ($count === 0) {
+            return true; // nenhum perfil definido = todos
+        }
+
+        return $DB->request([
+            'COUNT' => 'cpt',
+            'FROM'  => 'glpi_plugin_avisos_targets',
+            'WHERE' => [
+                'plugin_avisos_alerts_id' => $alerts_id,
+                'itemtype'                => 'Profile',
+                'items_id'                => (int) $profile,
+            ],
+        ])->current()['cpt'] > 0;
+    }
+
+    /**
+     * Existe fechamento/ciência do usuário para o aviso após a data de ref.?
+     *
+     * @param integer $alerts_id Id do aviso.
+     * @param integer $users_id  Usuário da sessão.
+     * @param string  $since     Data de referência (republicação ou início).
+     *
+     * @return boolean
+     */
+    private static function hasReadSince($alerts_id, $users_id, $since)
+    {
+        /** @var DBmysql $DB */
+        global $DB;
+
+        return $DB->request([
+            'COUNT' => 'cpt',
+            'FROM'  => 'glpi_plugin_avisos_reads',
+            'WHERE' => [
+                'plugin_avisos_alerts_id' => $alerts_id,
+                'users_id'                => (int) $users_id,
+                'date_action'             => ['>=', $since],
+            ],
+        ])->current()['cpt'] > 0;
+    }
+
+    /**
+     * Confere se um aviso é elegível para o usuário da sessão AGORA.
+     * Usado pelo endpoint de registro antes de gravar (seção 12.4).
+     *
+     * @param integer $alerts_id Id do aviso.
+     *
+     * @return boolean
+     */
+    public static function isEligibleForCurrentSession($alerts_id)
+    {
+        foreach (self::getPendingForCurrentSession() as $a) {
+            if ((int) $a['id'] === (int) $alerts_id) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Monta os dados de exibição de um aviso, prontos para o modal.
+     * Conteúdo é dessanitizado do armazenamento e passado pela allowlist de
+     * novo (sanitização na exibição — seção 12.2). Título vai como texto puro.
+     *
+     * @param array $alert Linha do banco.
+     *
+     * @return array
+     */
+    private static function buildModalData(array $alert)
+    {
+        $content = $alert['content'] ?? '';
+        if (class_exists(\Glpi\Toolbox\Sanitizer::class)
+            && \Glpi\Toolbox\Sanitizer::isHtmlEncoded($content)) {
+            $content = \Glpi\Toolbox\Sanitizer::unsanitize($content);
+        }
+        $content = PluginAvisosSanitizer::getSafeHtml($content);
+
+        return [
+            'id'       => (int) $alert['id'],
+            'title'    => (string) $alert['name'],   // texto puro; JS escapa
+            'content'  => $content,                  // HTML já sanitizado
+            'severity' => (string) $alert['severity'],
+            'behavior' => (string) $alert['behavior'],
+        ];
+    }
+
+    // ==================================================================
     //  Gravação: validação + sanitização (seção 12) + público-alvo
     // ==================================================================
 

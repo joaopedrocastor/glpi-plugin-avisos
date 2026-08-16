@@ -42,10 +42,17 @@ function plugin_init_avisos()
             ];
         }
 
-        // NOTA: a injeção de JS/CSS do modal e da faixa no portal de
-        // autoatendimento (seções 7 e 9) entra no próximo marco (telas).
-        // Fica isolada aqui de propósito para que a migração ao GLPI 11
-        // toque só nesta camada (seção 5).
+        // Injeção da camada de exibição SOMENTE no portal de autoatendimento
+        // (interface helpdesk) — a interface do técnico não recebe modal
+        // (seção 9). Fica isolada aqui de propósito para que a migração ao
+        // GLPI 11 toque só nesta camada (seção 5).
+        if (
+            Session::getLoginUserID()
+            && Session::getCurrentInterface() === 'helpdesk'
+        ) {
+            $PLUGIN_HOOKS['add_javascript']['avisos'][] = 'public/js/portal.js';
+            $PLUGIN_HOOKS['add_css']['avisos'][]        = 'public/css/portal.css';
+        }
     }
 }
 
