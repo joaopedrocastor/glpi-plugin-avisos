@@ -230,6 +230,13 @@ class PluginAvisosAlert extends CommonDBTM
             return false;
         }
 
+        // --- Datas vazias viram NULL (colunas datetime rejeitam '') ---
+        foreach (['date_start', 'date_end', 'date_republish'] as $df) {
+            if (array_key_exists($df, $input) && trim((string) $input[$df]) === '') {
+                $input[$df] = 'NULL';
+            }
+        }
+
         // --- Faixa indisponível para comportamento travante (seção 7.2) ---
         $behavior = $input['behavior'] ?? ($this->fields['behavior'] ?? self::BEHAVIOR_INFORMATIVE);
         if ($behavior === self::BEHAVIOR_BLOCKING) {
