@@ -66,7 +66,7 @@ function plugin_version_avisos()
     return [
         'name'           => __('Avisos ao usuário', 'avisos'),
         'version'        => PLUGIN_AVISOS_VERSION,
-        'author'         => 'TI',
+        'author'         => 'João Pedro Castor Quirino',
         'license'        => 'Proprietário',
         'homepage'       => '',
         'requirements'   => [
