@@ -7,7 +7,7 @@
  * @license Proprietário — de propriedade da empresa.
  */
 
-define('PLUGIN_AVISOS_VERSION', '1.0.0');
+define('PLUGIN_AVISOS_VERSION', '1.0.1');
 
 // Faixa de compatibilidade. Versão-alvo: GLPI 10.0.x (seção 5).
 define('PLUGIN_AVISOS_MIN_GLPI', '10.0.0');

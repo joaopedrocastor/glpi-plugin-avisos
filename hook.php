@@ -34,15 +34,15 @@ function plugin_avisos_install()
             `behavior` varchar(20) NOT NULL DEFAULT 'informative'
                 COMMENT 'informative | acknowledge | blocking',
             `keep_banner` tinyint NOT NULL DEFAULT '0',
-            `date_start` datetime DEFAULT NULL,
-            `date_end` datetime DEFAULT NULL,
-            `date_republish` datetime DEFAULT NULL,
+            `date_start` timestamp NULL DEFAULT NULL,
+            `date_end` timestamp NULL DEFAULT NULL,
+            `date_republish` timestamp NULL DEFAULT NULL,
             `is_active` tinyint NOT NULL DEFAULT '1',
             `priority` int NOT NULL DEFAULT '0',
             `users_id_creator` int {$default_key_sign} NOT NULL DEFAULT '0',
             `is_deleted` tinyint NOT NULL DEFAULT '0',
-            `date_creation` datetime DEFAULT NULL,
-            `date_mod` datetime DEFAULT NULL,
+            `date_creation` timestamp NULL DEFAULT NULL,
+            `date_mod` timestamp NULL DEFAULT NULL,
             PRIMARY KEY (`id`),
             KEY `is_active` (`is_active`),
             KEY `is_deleted` (`is_deleted`),
@@ -85,12 +85,41 @@ function plugin_avisos_install()
             `users_id` int {$default_key_sign} NOT NULL DEFAULT '0',
             `action` varchar(20) NOT NULL DEFAULT 'close'
                 COMMENT 'close | acknowledge',
-            `date_action` datetime DEFAULT NULL,
+            `date_action` timestamp NULL DEFAULT NULL,
             PRIMARY KEY (`id`),
             KEY `alert_user_date` (`plugin_avisos_alerts_id`, `users_id`, `date_action`)
         ) ENGINE=InnoDB DEFAULT CHARSET={$default_charset}
           COLLATE={$default_collation} ROW_FORMAT=DYNAMIC;";
         $DB->doQueryOrDie($query, $DB->error());
+    }
+
+    // ------------------------------------------------------------------
+    // Migração datetime -> timestamp (GLPI 10 com fuso horário ativado).
+    // Idempotente: só converte colunas que ainda estejam como datetime.
+    // Roda em toda instalação/atualização; em base nova não faz nada.
+    // ------------------------------------------------------------------
+    $date_columns = [
+        'glpi_plugin_avisos_alerts' => [
+            'date_start', 'date_end', 'date_republish', 'date_creation', 'date_mod',
+        ],
+        'glpi_plugin_avisos_reads' => ['date_action'],
+    ];
+    foreach ($date_columns as $table => $columns) {
+        if (!$DB->tableExists($table)) {
+            continue;
+        }
+        $fields = $DB->listFields($table, false);
+        foreach ($columns as $column) {
+            if (
+                isset($fields[$column])
+                && stripos((string) $fields[$column]['Type'], 'timestamp') === false
+            ) {
+                $DB->doQueryOrDie(
+                    "ALTER TABLE `$table` MODIFY `$column` timestamp NULL DEFAULT NULL",
+                    $DB->error()
+                );
+            }
+        }
     }
 
     // Direitos por perfil (seção 13).
